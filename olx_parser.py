@@ -218,29 +218,43 @@ def get_info(url):
             try:
                 username = drive.find_element(By.CSS_SELECTOR, 'h4[data-testid="user-profile-user-name"]').text
             except NoSuchElementException:
-                username = '------'
+                username = '-' * 10
             info.append(username)
 
-            userlink = drive.find_element(By.CSS_SELECTOR, 'a[data-testid="user-profile-link"]' ).get_attribute('href')
+            try:
+                userlink = drive.find_element(By.CSS_SELECTOR, 'a[data-testid="user-profile-link"]' ).get_attribute('href')
+            except NoSuchElementException:
+                userlink = '-' * 10
             info.append(userlink)
 
-            post_id = int(drive.find_element(By.CSS_SELECTOR, 'span[class="css-ooacec"]').text.split()[1])
+            try:
+                post_id = int(drive.find_element(By.CSS_SELECTOR, 'span[class="css-ooacec"]').text.split()[1])
+            except NoSuchElementException:
+                post_id = int('1' * 8)
             info.append(post_id)
 
-            product_title = drive.find_element(By.CSS_SELECTOR, 'h4[class="css-1au435n"]')
+            try:
+                product_title = drive.find_element(By.CSS_SELECTOR, 'h4[class="css-1au435n"]')
+            except NoSuchElementException:
+                product_title = 'Empty'
             info.append(product_title.text)
 
-            product_price = drive.find_element(By.CSS_SELECTOR, 'h3[class="css-yauxmy"]')
-            price = ''.join(x for x in product_price.text if x.isnumeric())
-            if price:
-                price = float(price)
-            else:
+            try:
+                product_price = drive.find_element(By.CSS_SELECTOR, 'h3[class="css-yauxmy"]')
+                price = ''.join(x for x in product_price.text if x.isnumeric())
+                if price:
+                    price = float(price)
+                else:
+                    price = 0.00
+            except NoSuchElementException:
                 price = 0.00
             info.append(price)
 
-            post_date = drive.find_element(By.CSS_SELECTOR, 'span[data-testid="ad-posted-at"]')
-            print(post_date.text)
-            converted_date = translate_date(post_date.text)
+            try:
+                post_date = drive.find_element(By.CSS_SELECTOR, 'span[data-testid="ad-posted-at"]')
+                converted_date = translate_date(post_date.text)
+            except NoSuchElementException:
+                converted_date = date.today()
             info.append(converted_date)
     finally:
         drive.close()
@@ -263,7 +277,7 @@ async def add_info(info, db_conn):
     if len(info) < 2:
         return db_conn
     else:
-        cursor.execute('''SELECT * FROM electronic_products WHERE PostLink = %s''', (info[0],))
+        cursor.execute('''SELECT * FROM articles WHERE PostLink = %s''', (info[0],))
         data = cursor.fetchone()
         if not data:
             try:
